@@ -3,7 +3,7 @@ title: 'Installing and Using Plugins'
 description: 'Learn how to find, install, and manage plugins that extend GitHub Copilot CLI with reusable agents, skills, hooks, and integrations.'
 authors:
   - GitHub Copilot Learning Hub Team
-lastUpdated: 2026-07-13
+lastUpdated: 2026-07-14
 estimatedReadingTime: '8 minutes'
 tags:
   - plugins
@@ -205,6 +205,18 @@ Or from an interactive session:
 Browse to the plugin via `@agentPlugins` in the Extensions search view or via **Chat: Plugins** in the Command Palette, then click **Install**.
 
 ## Managing Plugins
+
+### In-Session Plugin Dashboard
+
+*(v1.0.69+)* From inside any Copilot CLI session, run `/plugins` to open an interactive dashboard that lets you browse, enable, disable, and update your installed plugins without leaving the session:
+
+```
+/plugins
+```
+
+The `/plugins` dashboard shows all installed plugins and their status, lets you toggle individual plugins on or off for the current session, and lets you trigger updates — all from within your active agent session.
+
+### From the CLI
 
 Once installed, plugins are managed with a few simple commands:
 
