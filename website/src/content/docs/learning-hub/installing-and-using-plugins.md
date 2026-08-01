@@ -3,7 +3,7 @@ title: 'Installing and Using Plugins'
 description: 'Learn how to find, install, and manage plugins that extend GitHub Copilot CLI with reusable agents, skills, hooks, and integrations.'
 authors:
   - GitHub Copilot Learning Hub Team
-lastUpdated: 2026-07-13
+lastUpdated: 2026-08-01
 estimatedReadingTime: '8 minutes'
 tags:
   - plugins
@@ -236,6 +236,32 @@ Plugins loaded this way appear in `/plugin list` under a separate **External Plu
 
 - **Marketplace plugins**: `~/.copilot/installed-plugins/MARKETPLACE/PLUGIN-NAME/`
 - **Direct installs**: `~/.copilot/installed-plugins/_direct/PLUGIN-NAME/`
+
+## Enabling and Disabling Plugin Components
+
+*(v1.0.76+)* Once a plugin is installed, you can enable or disable individual components — agents, instructions, hooks, and LSP servers — without uninstalling the whole plugin. This is useful when you want most of a plugin's functionality but need to turn off one piece that conflicts with your workflow.
+
+From an interactive session:
+
+```
+/plugins enable my-plugin                  # enable an entire plugin
+/plugins disable my-plugin                 # disable an entire plugin
+
+/plugins enable --agent my-agent           # enable a specific agent by name
+/plugins disable --hook my-hook            # disable a specific hook
+
+/plugins enable --skill my-skill           # enable a specific skill
+/plugins disable --mcp my-mcp-server       # disable a specific MCP server
+```
+
+Or from the command line:
+
+```bash
+copilot plugins enable my-plugin
+copilot plugins disable my-plugin --hook my-hook
+```
+
+Disabled components are hidden from agent selection, excluded from session loading, and won't run during lifecycle events — but they remain installed on disk so you can re-enable them at any time. Run `/plugins` with no arguments to open the interactive plugin manager, which shows the enabled/disabled status of every installed plugin and component.
 
 ## How Plugins Work at Runtime
 
