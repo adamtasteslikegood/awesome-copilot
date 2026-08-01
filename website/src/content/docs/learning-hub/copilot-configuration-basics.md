@@ -3,7 +3,7 @@ title: 'Copilot Configuration Basics'
 description: 'Learn how to configure GitHub Copilot at user, workspace, and repository levels to optimize your AI-assisted development experience.'
 authors:
   - GitHub Copilot Learning Hub Team
-lastUpdated: 2026-07-13
+lastUpdated: 2026-08-01
 estimatedReadingTime: '10 minutes'
 tags:
   - configuration
@@ -441,6 +441,17 @@ These files follow the same format as `config.json` and are loaded after the glo
 
 > **Important (v1.0.36+)**: Custom agents, skills, and commands placed in `~/.claude/` (the Claude Code user directory) are **no longer loaded** by GitHub Copilot CLI. Only `~/.claude/settings.json` is read for configuration. If you previously stored personal agents or skills in `~/.claude/`, move them to the supported locations: `~/.copilot/agents/` for user-level agents, `~/.copilot/skills/` or `~/.agents/skills/` for personal skills, or `.github/agents/` and `.github/skills/` in your repositories for project-level customizations.
 
+### Logging In
+
+Run `copilot login` to authenticate with GitHub. As of v1.0.77, the **browser-based (web) OAuth flow** is the default on local interactive terminals — the CLI opens your browser automatically and completes authentication via GitHub.com. The device-code flow remains the default for remote and headless environments (such as SSH sessions or CI). You can force a specific flow with:
+
+```bash
+copilot login --web-flow      # always use the browser-based OAuth flow
+copilot login --device-code   # always use the device code flow
+```
+
+You can also select the login method interactively by running `/login` inside an active session.
+
 ### Model Picker
 
 The model picker opens in a **full-screen view** with inline reasoning effort adjustment. Use the **← / →** arrow keys to change the reasoning effort level (`low`, `medium`, `high`) directly from the picker without leaving the session. The current reasoning effort level is also displayed in the model header (e.g., `claude-sonnet-4.6 (high)`) so you always know which level is active.
@@ -448,6 +459,16 @@ The model picker opens in a **full-screen view** with inline reasoning effort ad
 **Auto mode and server-side model routing** (v1.0.43+): When you select **Auto** as your model, the CLI uses server-side model routing for real-time model selection. Instead of locking in a single model at session start, Auto mode evaluates each request and routes it to the most appropriate model dynamically. This means straightforward questions can be handled by a faster model while complex reasoning tasks are automatically escalated — without you needing to switch models manually.
 
 **Model family aliases** (v1.0.64+): Instead of typing a full model name, you can use short family aliases in the model setting: `opus`, `sonnet`, `haiku` (Anthropic), and `gpt`, `gemini` (Google/OpenAI). The CLI resolves the alias to the latest available model in that family. This is especially useful in scripts or configuration files where you want to track the best model in a family without hardcoding a version string.
+
+**Plan-mode model** (v1.0.74+): You can assign a different model specifically for plan mode — useful when you want a faster or cheaper model for planning steps without changing your primary session model. Use `/model plan` (or `/model --plan`) inside a session:
+
+```
+/model plan                  # open the model picker for plan mode
+/model plan claude-haiku-4   # set a specific model for plan mode
+/model plan off              # clear the plan-mode override (reverts to session model)
+```
+
+The plan-mode model is active only while plan mode is engaged and reverts to the session model when you leave plan mode.
 
 ### CLI Session Commands
 
@@ -532,6 +553,17 @@ The `/fork` command (v1.0.45+) copies the current session into a **new independe
 ```
 
 After forking, the new session is immediately active. Both sessions share the same history up to the fork point but accumulate changes independently from that moment forward. Use `/fork` to experiment with a risky refactor without abandoning your current working session. Since v1.0.47, forked sessions display their **origin session** name in the sessions dialog, making it easy to trace which session a fork came from.
+
+**Sessions sidebar** (v1.0.76+, experimental): The Sessions sidebar gives you a persistent split-pane view of all your concurrent sessions in one terminal window. Enable it with `/experimental on`, then turn it on with `/settings sidebar on`. Once enabled, the sidebar appears alongside the main chat area and lets you:
+
+- Switch between active sessions by clicking or pressing arrow keys
+- Spawn a new session with **n**
+- Close a session with **x** twice (keyboard) or by clicking the close button
+- See each session's status (idle, working, waiting for input) at a glance
+
+Sessions are persisted across restarts when the sidebar is enabled, so backgrounded sessions survive CLI restarts and reappear where you left them. The sidebar keeps all your parallel workstreams visible without switching terminal tabs.
+
+> **Note**: The Sessions sidebar is experimental and may change. Hover-to-focus is off by default (opt in with `sidebar.hoverFocus`). The active session card is accented by default (opt out with `sidebar.accentActiveSession`).
 
 The `/cd` command changes the working directory for the current session. Since v1.0.65, the working directory **persists when you resume a session** — if you restart the CLI and resume, you return to the same directory automatically. Changing directory also triggers discovery of custom agents in the new location, so switching to a different project loads its agents without a restart:
 
@@ -664,6 +696,14 @@ The `/usage` command displays session metrics such as the number of tokens consu
 ```
 /usage
 ```
+
+The `/limits predict` command *(v1.0.76+)* analyses your recent session history and suggests a reasonable AI-credit limit for the current type of task. Use it before starting a long-running session to set a budget that matches what similar sessions have historically consumed:
+
+```
+/limits predict         # suggest a session credit limit based on similar sessions
+```
+
+This is particularly useful in automated or unattended sessions where you want a cost guardrail without manually estimating token usage upfront.
 
 The `/compact` command summarizes the conversation history to free up context window space while preserving the thread of the conversation. Use it when your context is getting full but you do not want to start a fresh session:
 
