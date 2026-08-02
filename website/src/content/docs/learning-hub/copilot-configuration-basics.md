@@ -3,7 +3,7 @@ title: 'Copilot Configuration Basics'
 description: 'Learn how to configure GitHub Copilot at user, workspace, and repository levels to optimize your AI-assisted development experience.'
 authors:
   - GitHub Copilot Learning Hub Team
-lastUpdated: 2026-07-13
+lastUpdated: 2026-08-02
 estimatedReadingTime: '10 minutes'
 tags:
   - configuration
@@ -717,6 +717,14 @@ Use `/autopilot` when you want to flip between supervised and unsupervised opera
 
 > **Read-only `gh` CLI commands (v1.0.46+)**: Read-only `gh` commands — such as `gh issue list`, `gh pr view`, `gh run status`, and other commands that don't write to GitHub — are **automatically approved** without a permission prompt. Only commands that write to GitHub (like creating issues, merging PRs) still require explicit approval. This reduces friction during exploratory sessions where you frequently check issue or PR status.
 
+The `/permissions` command *(v1.0.78+)* is a streamlined way to switch between approval modes mid-session. It replaces the need to remember separate `/allow-all` and `/autopilot` subcommands:
+
+```
+/permissions          # open interactive approval mode picker
+```
+
+The picker shows all available modes — interactive, autopilot, auto (LLM judge), and allow-all — and applies your selection immediately. Use `/permissions` when you want to change how aggressively Copilot runs tools without remembering individual command syntax.
+
 The `--effort` flag (shorthand for `--reasoning-effort`) controls how much computational reasoning the model applies to a request:
 
 ```bash
@@ -760,6 +768,10 @@ copilot --no-sandbox -p "Set up development environment with system tools"
 ```
 
 These flags apply only to the current invocation — your persisted sandbox preference remains unchanged.
+
+> **`allowDevToolCaches` sandbox setting *(v1.0.78+)***: The sandbox now includes an `allowDevToolCaches` setting (on by default) that grants sandboxed builds access to toolchain caches, package registries, and local installs. This means package managers like `npm`, `pip`, and `cargo` work as expected inside the sandbox without extra configuration. Set it to `false` to opt out and enforce a fully isolated cache environment.
+
+> **Enterprise MDM sandbox enforcement *(v1.0.77+)***: Enterprise administrators can enforce a restrictive sandbox floor via macOS and Windows native MDM settings. Managed settings can tighten — but never loosen — a user's sandbox policy. The `/sandbox` dialog surfaces the org-configured managed values with locked fields, so administrators can confirm exactly what is enforced across their fleet.
 
 The `--attachment` flag (available in prompt mode, `-p`) lets you attach files — images or native documents — to the initial prompt in non-interactive mode:
 
@@ -807,6 +819,8 @@ echo 'source ~/.copilot-completion.bash' >> ~/.bashrc
 ```
 
 > **Tip**: Reload your shell (`source ~/.bashrc` or open a new terminal) after adding the completion script for changes to take effect.
+
+> **Model name completion *(v1.0.78+)***: Shell completion now suggests `auto` and all supported model names when you press Tab after `--model`. This makes it easier to discover available models without consulting documentation.
 
 ## Common Questions
 
