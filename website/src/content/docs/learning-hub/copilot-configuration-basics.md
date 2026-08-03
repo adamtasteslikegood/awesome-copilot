@@ -3,7 +3,7 @@ title: 'Copilot Configuration Basics'
 description: 'Learn how to configure GitHub Copilot at user, workspace, and repository levels to optimize your AI-assisted development experience.'
 authors:
   - GitHub Copilot Learning Hub Team
-lastUpdated: 2026-07-13
+lastUpdated: 2026-08-03
 estimatedReadingTime: '10 minutes'
 tags:
   - configuration
@@ -430,6 +430,8 @@ CLI settings use **camelCase** naming. Key settings added in recent releases:
 | `sessionLimits` | Restrict credit or turn usage for a session; limits apply across the current conversation and reset on `/clear` (v1.0.66+) |
 | `stayInAutopilot` | Keep the CLI in autopilot mode after an autopilot task completes, instead of returning to interactive mode (v1.0.69+) |
 
+> **`/limits predict` (v1.0.76+)**: The `/limits predict` sub-command analyzes your recent session history and suggests an appropriate AI-credit limit for the current session based on similar past sessions. This helps you set a budget for long-running autonomous tasks without guessing.
+
 > **Note**: Older snake_case names (e.g., `include_gitignored`, `auto_updates_channel`) are still accepted for backward compatibility, but camelCase is now the preferred format.
 
 In addition to the main config file, GitHub Copilot CLI reads two optional per-project files for repository-specific overrides:
@@ -448,6 +450,8 @@ The model picker opens in a **full-screen view** with inline reasoning effort ad
 **Auto mode and server-side model routing** (v1.0.43+): When you select **Auto** as your model, the CLI uses server-side model routing for real-time model selection. Instead of locking in a single model at session start, Auto mode evaluates each request and routes it to the most appropriate model dynamically. This means straightforward questions can be handled by a faster model while complex reasoning tasks are automatically escalated — without you needing to switch models manually.
 
 **Model family aliases** (v1.0.64+): Instead of typing a full model name, you can use short family aliases in the model setting: `opus`, `sonnet`, `haiku` (Anthropic), and `gpt`, `gemini` (Google/OpenAI). The CLI resolves the alias to the latest available model in that family. This is especially useful in scripts or configuration files where you want to track the best model in a family without hardcoding a version string.
+
+**grok-4.5** (v1.0.76+): xAI's `grok-4.5` model is now available and selectable via `/model` or the `--model` flag alongside the existing Anthropic, Google, and OpenAI models.
 
 ### CLI Session Commands
 
@@ -557,6 +561,14 @@ This creates a branch named from your task description and begins working on it 
 
 After the command runs, the session is inside the new worktree. Use this when you want to work on a second task in parallel without stashing changes or opening a new terminal. In v1.0.64+ you can also use the experimental `--worktree` flag at startup (`copilot -w [name]`) to create or reuse a worktree under `<repo>.worktrees/` before the session begins.
 
+The `/new-worktree` command (v1.0.78+, experimental) is an alternative that creates a new worktree **and immediately starts a fresh conversation in it**, leaving the current session untouched:
+
+```
+/new-worktree
+```
+
+Unlike `/worktree` (which moves the current session into a new branch), `/new-worktree` spawns a separate session in a new worktree so both the original and the new task run in parallel. Enable experimental features first with `/experimental on` to use this command.
+
 The `/every` command (also available as `/loop` since v1.0.64) schedules a recurring prompt to run automatically at a specified interval. The companion `/after` command runs a prompt once after a specified delay. Both are useful for self-paced automation — polling for results, periodically summarizing progress, or triggering other slash commands on a timer:
 
 ```
@@ -626,6 +638,10 @@ The `/diagnose` command (v1.0.64+) analyzes the current session's logs and surfa
 Use `/diagnose` when a session is behaving unexpectedly — it inspects session logs and reports what it finds, making it easier to share diagnostics with support or understand what happened internally.
 
 **Keyboard shortcuts for queuing messages**: Use **Ctrl+Q** or **Ctrl+Enter** to queue a message (send it while the agent is still working). **Ctrl+D** no longer queues messages — it now has its default terminal behavior. If you have muscle memory for Ctrl+D queuing, switch to Ctrl+Q.
+
+**Queue manager** (v1.0.76+): A directable queue manager lets you inspect and manage your queued messages before they are sent. From the queue, you can reorder, edit, remove, repeat, or immediately send any queued message — useful when you realize a later-queued message is more urgent, or when you want to cancel a message you've already queued.
+
+**Sessions sidebar** (v1.0.76+, experimental): A sidebar for managing multiple concurrent sessions shows all your active sessions, lets you switch between them, spawn new ones, and see their status at a glance. Enable it with `/experimental on` and then toggle it open via the sidebar shortcut.
 
 **Background running tasks**: Press **Ctrl+X → B** to move the current running task or shell command to the background. The task continues executing while you can type a new message or review earlier output. This is useful for long-running commands where you want to interact with the agent while waiting for the result.
 
@@ -713,7 +729,15 @@ Use `/autopilot` when you want to flip between supervised and unsupervised opera
 
 > **Enhanced autopilot (v1.0.64+)**: When autopilot mode is active — including when launched with `--autopilot` at startup or during automatic continuation turns — the agent automatically handles elicitation dialogs, `ask_user` prompts, sampling requests, and permission prompts without surfacing them as interactive dialogs. This means long-running automated sessions can proceed end-to-end without manual confirmation steps.
 
-> **Auto allow-all mode (v1.0.69+)**: In addition to the standard allow-all mode (which approves everything), the CLI now supports an **auto allow-all** mode that uses an LLM judge to evaluate each tool request. When enabled, the judge automatically approves requests it evaluates as acceptable, and asks you for manual confirmation only for requests it considers risky. This gives you a middle ground between full autopilot and fully supervised operation — most routine actions proceed automatically while unusual or potentially dangerous actions still surface for your review. As of v1.0.69-3, this mode requires experimental features to be enabled — use `/experimental on` or start the CLI with `--experimental` — then activate it with `/allow-all auto`. The previous `AUTO_APPROVAL` environment variable approach has been removed in favour of experimental mode.
+> **Auto allow-all mode (v1.0.69+)**: In addition to the standard allow-all mode (which approves everything), the CLI now supports an **auto allow-all** mode that uses an LLM judge to evaluate each tool request. When enabled, the judge automatically approves requests it evaluates as acceptable, and asks you for manual confirmation only for requests it considers risky. This gives you a middle ground between full autopilot and fully supervised operation — most routine actions proceed automatically while unusual or potentially dangerous actions still surface for your review. As of v1.0.69-3, this mode requires experimental features to be enabled — use `/experimental on` or start the CLI with `--experimental` — then activate it with `/allow-all auto`. The previous `AUTO_APPROVAL` environment variable approach has been removed in favour of experimental mode. **As of v1.0.78, the judge model is selected automatically** — it is no longer user-configurable.
+
+The `/permissions` command (v1.0.78+) provides a unified interface for switching between approval modes mid-session:
+
+```
+/permissions
+```
+
+Opening `/permissions` presents the available approval modes (interactive, autopilot, auto) and lets you switch between them without remembering the specific `/allow-all` subcommands. It is the recommended way to manage approval modes going forward.
 
 > **Read-only `gh` CLI commands (v1.0.46+)**: Read-only `gh` commands — such as `gh issue list`, `gh pr view`, `gh run status`, and other commands that don't write to GitHub — are **automatically approved** without a permission prompt. Only commands that write to GitHub (like creating issues, merging PRs) still require explicit approval. This reduces friction during exploratory sessions where you frequently check issue or PR status.
 
@@ -726,6 +750,8 @@ gh copilot --effort high "Refactor the authentication module"
 Accepted values are `low`, `medium`, and `high`. You can also set a default via the `effortLevel` config setting.
 
 ### CLI Startup Flags
+
+**Browser-based login** (v1.0.77+): `copilot login` now defaults to an OAuth browser flow on local interactive desktops — your browser opens and you authenticate with GitHub, then the token is returned to the CLI automatically. On remote and headless terminals, device code remains the default. You can force a specific mode with `--web-flow` (browser) or `--device-code` (device code), or pick one interactively with `/login`.
 
 The `-C <directory>` flag changes the working directory before starting, similar to `git -C` (v1.0.42+). This is useful for scripts or aliases that need to start Copilot CLI in a specific project directory without a separate `cd`:
 
@@ -760,6 +786,10 @@ copilot --no-sandbox -p "Set up development environment with system tools"
 ```
 
 These flags apply only to the current invocation — your persisted sandbox preference remains unchanged.
+
+**Enterprise sandbox policy via MDM** (v1.0.77+): Enterprise administrators can enforce a restrictive sandbox floor using native macOS and Windows MDM settings. Managed settings **tighten but never loosen** the user's sandbox policy — the `/sandbox` dialog surfaces org-configured values with locked fields so administrators can confirm what is enforced. Individual users cannot relax a policy set by their organization.
+
+**`allowDevToolCaches` sandbox setting** (v1.0.78+): A new sandbox setting, `allowDevToolCaches` (on by default), grants sandboxed builds access to toolchain caches, registries, and package installs (npm, pip, cargo, etc.) so builds work without extra configuration. Set it to `false` to opt out and enforce a stricter cache isolation policy.
 
 The `--attachment` flag (available in prompt mode, `-p`) lets you attach files — images or native documents — to the initial prompt in non-interactive mode:
 
