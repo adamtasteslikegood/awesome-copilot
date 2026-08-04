@@ -3,7 +3,7 @@ title: 'Using the Copilot Coding Agent'
 description: 'Learn how to use GitHub Copilot coding agent to autonomously work on issues, generate pull requests, and automate development tasks.'
 authors:
   - GitHub Copilot Learning Hub Team
-lastUpdated: 2026-05-13
+lastUpdated: 2026-08-04
 estimatedReadingTime: '12 minutes'
 tags:
   - coding-agent
@@ -77,6 +77,8 @@ Think of this file as bootstrapping instructions for a new developer joining the
 **Build step**: Compile the project if needed, so the agent can verify its changes build successfully.
 
 **Test command**: Run the test suite so the agent can validate its changes don't break existing functionality.
+
+> **Toolchain caches**: The coding agent sandbox includes an `allowDevToolCaches` setting (on by default) that grants builds access to toolchain caches, package registries, and local installs. This means common build steps like `npm ci` or `pip install` work without extra configuration. If you need a fully isolated build environment with no cached state, you can disable this setting.
 
 **Example for a Python project**:
 ```yaml
@@ -421,6 +423,16 @@ It's less suited for:
 - All changes go through PR review before merging
 - Use hooks to enforce security scanning on every commit
 - Scope repository permissions appropriately
+
+### Controlling Approval Modes with `/permissions`
+
+*(v1.0.78+)* When working interactively with the coding agent in the CLI, use the `/permissions` command to switch between approval modes at any time:
+
+```
+/permissions
+```
+
+This opens an interactive panel where you can change how the agent requests approval for tool use — for example, switching from per-action approval to autopilot mode, or back to a more supervised mode when reviewing sensitive changes. Previously, approval modes could only be changed at session start.
 
 ## Common Questions
 
