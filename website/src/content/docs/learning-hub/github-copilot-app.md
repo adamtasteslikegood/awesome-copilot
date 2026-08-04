@@ -3,7 +3,7 @@ title: 'Getting Started with the GitHub Copilot app'
 description: 'Learn about the GitHub Copilot app, a desktop experience built for agent-native development. Understand its key features and who it''s for.'
 authors:
   - GitHub Copilot Learning Hub Team
-lastUpdated: 2026-06-17
+lastUpdated: 2026-08-04
 estimatedReadingTime: '8 minutes'
 tags:
   - copilot-app
@@ -50,6 +50,16 @@ The central hub of the Copilot app is the **My Work** view. This dashboard shows
 
 Instead of checking GitHub, your CLI, and VS Code for updates, everything is in one place.
 
+#### Sessions Sidebar for Multiple Concurrent Sessions
+
+*(v1.0.76, experimental)* Enable the **Sessions sidebar** with `/experimental on` in the GitHub Copilot CLI to manage multiple concurrent sessions in a single terminal window. The sidebar lets you:
+
+- Switch between active sessions
+- Spawn new sessions without leaving the current one
+- See the status of each session at a glance
+
+This brings a multi-session workflow to the CLI that mirrors the parallel work experience of the Copilot app. To enable it, run `/experimental on` in an interactive session.
+
 ### Automations
 
 The Copilot app includes built-in automations that can run scheduled tasks for you using the same agentic technology. You can use templates out of the box or create your own.
@@ -66,6 +76,16 @@ Each session the Copilot app creates runs in its own **git worktree**—a real, 
 - You can pick up a session from any device, on any worktree
 
 This makes it easy to dispatch multiple agents and trust they won't interfere with each other.
+
+#### Creating a New Worktree from the Terminal
+
+*(v1.0.78, experimental)* When working in a GitHub Copilot CLI session, you can create a new worktree and start a fresh conversation in it directly from the terminal with the `/new-worktree` command:
+
+```
+/new-worktree
+```
+
+This creates an isolated git worktree and opens a new session in that context — useful when you want to branch off mid-conversation to explore a different approach without disrupting your current session.
 
 ### Canvases
 
