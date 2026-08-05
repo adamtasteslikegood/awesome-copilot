@@ -3,7 +3,7 @@ title: 'Copilot Configuration Basics'
 description: 'Learn how to configure GitHub Copilot at user, workspace, and repository levels to optimize your AI-assisted development experience.'
 authors:
   - GitHub Copilot Learning Hub Team
-lastUpdated: 2026-07-13
+lastUpdated: 2026-08-05
 estimatedReadingTime: '10 minutes'
 tags:
   - configuration
@@ -515,6 +515,8 @@ The `/rewind` command opens a timeline picker that lets you roll back the conver
 
 Use `/rewind` when you want to branch off from a different point in the conversation, rather than just undoing the most recent turn.
 
+> **Updated behavior (v1.0.78+)**: `/rewind` no longer requires git to be installed. It restores only the files that Copilot itself changed — skipping any file whose contents no longer match what Copilot last wrote — and lets you choose between reverting conversation only, or conversation plus file changes.
+
 The `/undo` command reverts the last turn—including any file changes the agent made—letting you course-correct without manually undoing edits:
 
 ```
@@ -556,6 +558,14 @@ In v1.0.66+, you can pass a task description to `/worktree` to name the branch f
 This creates a branch named from your task description and begins working on it immediately, making it easy to spin up parallel work without stopping to think of a branch name.
 
 After the command runs, the session is inside the new worktree. Use this when you want to work on a second task in parallel without stashing changes or opening a new terminal. In v1.0.64+ you can also use the experimental `--worktree` flag at startup (`copilot -w [name]`) to create or reuse a worktree under `<repo>.worktrees/` before the session begins.
+
+The `/worktree new` sub-command *(v1.0.78+, previously available as the experimental `/new-worktree`)* creates a new git worktree **and starts a brand-new conversation in it** — giving you a fresh context window for a parallel task while your current session continues unchanged in the background:
+
+```
+/worktree new
+```
+
+Unlike the base `/worktree` command (which moves your current session into a new worktree), `/worktree new` always opens a separate session. Switch between sessions with the session picker (`--resume`) or the tab bar.
 
 The `/every` command (also available as `/loop` since v1.0.64) schedules a recurring prompt to run automatically at a specified interval. The companion `/after` command runs a prompt once after a specified delay. Both are useful for self-paced automation — polling for results, periodically summarizing progress, or triggering other slash commands on a timer:
 
@@ -632,6 +642,12 @@ Use `/diagnose` when a session is behaving unexpectedly — it inspects session 
 **Shell command history in normal mode** (v1.0.65+): The **↑/↓** arrow keys and **Ctrl+R** reverse search now include past shell commands (commands run with `!`) while you are in normal (non-shell) input mode. Previously you had to type `!` to enter shell mode before history worked. Now you can recall and re-run a shell command without switching modes first — useful for quickly repeating a build, test, or diagnostic command from earlier in the session.
 
 **Inline image rendering** (v1.0.64+): The CLI can display images inline in the terminal when your terminal supports it. If an MCP tool, agent, or attachment returns an image, it is rendered directly in the conversation timeline rather than shown as a file path or URL. This works in terminals with image protocol support (such as iTerm2, Kitty, Wezterm, and tmux with appropriate configuration).
+
+**Timeline tool call durations** *(v1.0.78+)*: The timeline now shows how long each tool call took — displayed right-aligned and ticking live while the tool is running (for calls of at least 5 seconds). This makes it easy to spot slow tool calls at a glance. This is on by default; disable it with:
+
+```
+/settings showToolDurations
+```
 
 The `/ask` command lets you ask a quick question without affecting your conversation history. The current session context is preserved, so you can use it for one-off lookups without derailing an ongoing task. Responses are rendered as full markdown, including tables and formatted links:
 
@@ -711,6 +727,14 @@ The `/autopilot` command (v1.0.45+) is a quick in-session toggle that switches b
 
 Use `/autopilot` when you want to flip between supervised and unsupervised operation mid-session without typing out the full `/allow-all on` or `/allow-all off` commands.
 
+The `/permissions` command *(v1.0.78+)* lets you switch the overall permission approval mode for the current session from within the conversation:
+
+```
+/permissions
+```
+
+Running `/permissions` opens an interactive menu where you can switch between approval modes — for example, moving from fully interactive (requiring confirmation for each tool call) to a mode that automatically approves low-risk operations. This is a more discoverable alternative to `/allow-all` and `/autopilot` for mid-session mode changes.
+
 > **Enhanced autopilot (v1.0.64+)**: When autopilot mode is active — including when launched with `--autopilot` at startup or during automatic continuation turns — the agent automatically handles elicitation dialogs, `ask_user` prompts, sampling requests, and permission prompts without surfacing them as interactive dialogs. This means long-running automated sessions can proceed end-to-end without manual confirmation steps.
 
 > **Auto allow-all mode (v1.0.69+)**: In addition to the standard allow-all mode (which approves everything), the CLI now supports an **auto allow-all** mode that uses an LLM judge to evaluate each tool request. When enabled, the judge automatically approves requests it evaluates as acceptable, and asks you for manual confirmation only for requests it considers risky. This gives you a middle ground between full autopilot and fully supervised operation — most routine actions proceed automatically while unusual or potentially dangerous actions still surface for your review. As of v1.0.69-3, this mode requires experimental features to be enabled — use `/experimental on` or start the CLI with `--experimental` — then activate it with `/allow-all auto`. The previous `AUTO_APPROVAL` environment variable approach has been removed in favour of experimental mode.
@@ -760,6 +784,19 @@ copilot --no-sandbox -p "Set up development environment with system tools"
 ```
 
 These flags apply only to the current invocation — your persisted sandbox preference remains unchanged.
+
+The **`allowDevToolAccess`** sandbox setting *(v1.0.78+, previously named `allowDevToolCaches` before the breaking rename in v1.0.79-1)* controls whether sandboxed builds can access toolchain caches, registries, and installs (npm, pip, cargo caches, etc.). It is **on by default**, which means most builds work out of the box without extra sandbox configuration:
+
+```json
+// settings.json
+{
+  "sandbox": {
+    "allowDevToolAccess": false   // set false to opt out
+  }
+}
+```
+
+> **Breaking rename**: If you previously had `"allowDevToolCaches": false` in your `settings.json` to opt out of dev-tool cache access, rename it to `"allowDevToolAccess": false`. The old key is silently ignored as of v1.0.79-1, which means an existing opt-out will revert to the default (on) unless you rename the key.
 
 The `--attachment` flag (available in prompt mode, `-p`) lets you attach files — images or native documents — to the initial prompt in non-interactive mode:
 
