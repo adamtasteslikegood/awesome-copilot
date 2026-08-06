@@ -3,7 +3,7 @@ title: 'Using the Copilot Coding Agent'
 description: 'Learn how to use GitHub Copilot coding agent to autonomously work on issues, generate pull requests, and automate development tasks.'
 authors:
   - GitHub Copilot Learning Hub Team
-lastUpdated: 2026-05-13
+lastUpdated: 2026-08-06
 estimatedReadingTime: '12 minutes'
 tags:
   - coding-agent
@@ -376,6 +376,22 @@ Since v1.0.47, `--resume` also surfaces **cloud agent sessions that haven't yet 
 | No PR required | You can steer tasks that haven't yet opened a pull request |
 
 > **Note**: Remote control replaces the earlier "steering" feature. If you see references to steering in older documentation, remote control is the updated equivalent.
+
+## Working with Multiple Worktrees
+
+*(Experimental — v1.0.78+)* The `/new-worktree` command lets you create a new git worktree and immediately start a fresh Copilot conversation in it, without leaving your current session:
+
+```
+/new-worktree
+```
+
+This is useful when you're mid-session and want to spin up a parallel workstream — for example, exploring a different approach or handling an urgent bug fix — while keeping your current session intact. Each worktree has its own branch and isolated filesystem state, so the two conversations don't interfere.
+
+To enable this command, turn on experimental mode first:
+
+```
+/experimental on
+```
 
 ## Hooks and the Coding Agent
 
