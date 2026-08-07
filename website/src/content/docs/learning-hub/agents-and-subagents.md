@@ -3,7 +3,7 @@ title: 'Agents and Subagents'
 description: 'Learn how delegated subagents differ from primary agents, when to use them, and how to launch them in VS Code and Copilot CLI.'
 authors:
   - GitHub Copilot Learning Hub Team
-lastUpdated: 2026-07-01
+lastUpdated: 2026-08-07
 estimatedReadingTime: '9 minutes'
 tags:
   - agents
@@ -133,6 +133,18 @@ The important behavior is different from a single chat turn:
 - subagents share the same filesystem, so overlapping writes should be avoided
 
 That makes `/fleet` a practical way to launch subagents even if you are not authoring custom agent files yourself.
+
+### Multiple concurrent sessions
+
+*(v1.0.79+)* Copilot CLI now lets you manage multiple concurrent sessions from the **Sessions tab** and sidebar. Rather than running one CLI instance per task, you can switch between sessions inside a single terminal window — inspecting each agent's progress, sending follow-up prompts to any session, and letting independent tracks run in parallel without opening separate shells.
+
+To start a new session in an isolated worktree directly from an existing session:
+
+```
+/worktree new
+```
+
+This creates a fresh git worktree for the new session so that two parallel workstreams never interfere with each other's uncommitted changes.
 
 ### Rubber-duck agent
 
