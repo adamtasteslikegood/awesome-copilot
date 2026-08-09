@@ -3,7 +3,7 @@ title: 'Getting Started with the GitHub Copilot app'
 description: 'Learn about the GitHub Copilot app, a desktop experience built for agent-native development. Understand its key features and who it''s for.'
 authors:
   - GitHub Copilot Learning Hub Team
-lastUpdated: 2026-06-17
+lastUpdated: 2026-08-09
 estimatedReadingTime: '8 minutes'
 tags:
   - copilot-app
@@ -49,6 +49,17 @@ The central hub of the Copilot app is the **My Work** view. This dashboard shows
 - **Overall status**: A quick overview of what's in progress, what's done, and what's blocked
 
 Instead of checking GitHub, your CLI, and VS Code for updates, everything is in one place.
+
+### Sessions Tab
+
+The **Sessions tab** and sidebar let you manage multiple concurrent sessions from a single view. This is especially useful when running parallel agents on different tasks:
+
+- See all active, paused, and completed sessions at a glance
+- Switch between sessions without losing context
+- Start new sessions directly from the tab
+- Each session retains its own isolated worktree, branch, and history
+
+You can also manage multiple sessions from the Copilot CLI using the same Sessions tab interface, keeping your terminal and app views in sync.
 
 ### Automations
 
@@ -149,6 +160,16 @@ Each session runs in its own worktree with its own isolated environment. You can
 ### Launching Sessions from the Terminal with Deep Links
 
 The GitHub Copilot app supports URL deep links. This is useful when you want to open the app or start a session directly from your terminal workflow.
+
+#### Open the App from Your CLI Session
+
+If you're already in a Copilot CLI session, the `/app` command opens that session directly in the GitHub Copilot desktop app:
+
+```
+/app
+```
+
+This lets you seamlessly transition from the terminal to the app without losing your session context. The app will open to the current session — useful when you want to switch to a visual interface mid-task. Requires GitHub Copilot app 1.1.3 or later.
 
 Supported schemes:
 
