@@ -3,7 +3,7 @@ title: 'Installing and Using Plugins'
 description: 'Learn how to find, install, and manage plugins that extend GitHub Copilot CLI with reusable agents, skills, hooks, and integrations.'
 authors:
   - GitHub Copilot Learning Hub Team
-lastUpdated: 2026-07-13
+lastUpdated: 2026-08-10
 estimatedReadingTime: '8 minutes'
 tags:
   - plugins
@@ -160,6 +160,22 @@ To automatically register an additional marketplace for everyone working in a re
 
 With this in place, team members automatically get the `my-org-plugins` marketplace available without running a separate `marketplace add` command. This replaces the older `marketplaces` setting, which was removed in v1.0.16.
 
+*(v1.0.79+)* You can also add an `autoUpdate` field to each marketplace entry to control whether plugins from that marketplace are automatically updated when new versions are released:
+
+```json
+{
+  "extraKnownMarketplaces": [
+    {
+      "name": "my-org-plugins",
+      "source": "my-org/internal-plugins",
+      "autoUpdate": true
+    }
+  ]
+}
+```
+
+Set `"autoUpdate": true` to keep plugins from this marketplace up to date automatically, or omit it (or set it to `false`) to require explicit `copilot plugin update` calls.
+
 ### Pinning a Marketplace to a Specific Commit
 
 *(v1.0.70+)* To ensure reproducibility and prevent unintended updates, you can pin a marketplace to an exact commit SHA using the `sha` field in the source configuration:
@@ -231,6 +247,8 @@ copilot --plugin-dir /path/to/my-plugin
 ```
 
 Plugins loaded this way appear in `/plugin list` under a separate **External Plugins** section, clearly distinguished from marketplace-installed plugins. This is useful for testing local plugins in development or loading private plugins that aren't published to any marketplace.
+
+> *(v1.0.78+)* **First-party plugins auto-update**: Plugins published by GitHub (first-party plugins) now update automatically in the background when a new version is available. You will see a notification in the CLI when an update has been applied. Third-party plugins from community marketplaces still require an explicit `copilot plugin update` command.
 
 ### Where Plugins Are Stored
 

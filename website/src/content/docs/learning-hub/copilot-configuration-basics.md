@@ -3,7 +3,7 @@ title: 'Copilot Configuration Basics'
 description: 'Learn how to configure GitHub Copilot at user, workspace, and repository levels to optimize your AI-assisted development experience.'
 authors:
   - GitHub Copilot Learning Hub Team
-lastUpdated: 2026-07-13
+lastUpdated: 2026-08-10
 estimatedReadingTime: '10 minutes'
 tags:
   - configuration
@@ -429,6 +429,8 @@ CLI settings use **camelCase** naming. Key settings added in recent releases:
 | `proxy` | HTTP(S) proxy URL for all outbound CLI requests (e.g., `http://proxy.example.com:8080`) (v1.0.64+) |
 | `sessionLimits` | Restrict credit or turn usage for a session; limits apply across the current conversation and reset on `/clear` (v1.0.66+) |
 | `stayInAutopilot` | Keep the CLI in autopilot mode after an autopilot task completes, instead of returning to interactive mode (v1.0.69+) |
+| `allowDevToolAccess` | Allow or deny development tool access in the sandbox environment (v1.0.79+; renamed from `allowDevToolCaches`) |
+| `worktreeBaseRef` | Default base branch for new worktrees created with `/worktree new` (v1.0.79+) |
 
 > **Note**: Older snake_case names (e.g., `include_gitignored`, `auto_updates_channel`) are still accepted for backward compatibility, but camelCase is now the preferred format.
 
@@ -469,6 +471,8 @@ The settings dialog supports search — type to filter settings by name. Changes
 ```
 
 These flags mirror the **Repo** and **Repo (local)** scope tabs available in the `/settings` dashboard (v1.0.71+), making it easier to manage per-repository vs. user-global configuration without ambiguity. In v1.0.71+, the `/settings` dashboard also shows **Repo** and **Repo (local)** tabs alongside the existing user-level view, giving you a unified place to see which settings are applied at each layer.
+
+> **Session-scoped model (v1.0.79+)**: The `/model` command is now **session-scoped by default** — changing the model only affects the current session, not your persisted global preference. To explicitly save a model preference across sessions, use `/model --local` (user-level) or `/model --repo` (repository-level).
 
 GitHub Copilot CLI has two commands for managing session state, with distinct behaviours:
 
@@ -554,6 +558,15 @@ In v1.0.66+, you can pass a task description to `/worktree` to name the branch f
 ```
 
 This creates a branch named from your task description and begins working on it immediately, making it easy to spin up parallel work without stopping to think of a branch name.
+
+In v1.0.78+, the **`/new-worktree`** command (also available as `/worktree new` since v1.0.79+) creates a new worktree without moving any uncommitted changes from the current session, keeping your current work intact:
+
+```
+/new-worktree my-feature-branch   # create a new worktree without moving changes
+/worktree new my-feature-branch   # subcommand form (v1.0.79+)
+```
+
+Use `/new-worktree` (or `/worktree new`) when you want to start a parallel task from scratch, without relocating your current uncommitted work. Use `/worktree` (without `new`) when you want to carry uncommitted changes into a new branch.
 
 After the command runs, the session is inside the new worktree. Use this when you want to work on a second task in parallel without stashing changes or opening a new terminal. In v1.0.64+ you can also use the experimental `--worktree` flag at startup (`copilot -w [name]`) to create or reuse a worktree under `<repo>.worktrees/` before the session begins.
 
@@ -665,6 +678,8 @@ The `/usage` command displays session metrics such as the number of tokens consu
 /usage
 ```
 
+*(v1.0.78+)* The CLI now also shows **token-usage notifications** inline during a session when you approach significant usage thresholds, so you can proactively compact or close the session without waiting to hit a hard limit.
+
 The `/compact` command summarizes the conversation history to free up context window space while preserving the thread of the conversation. Use it when your context is getting full but you do not want to start a fresh session:
 
 ```
@@ -761,7 +776,29 @@ copilot --no-sandbox -p "Set up development environment with system tools"
 
 These flags apply only to the current invocation — your persisted sandbox preference remains unchanged.
 
-The `--attachment` flag (available in prompt mode, `-p`) lets you attach files — images or native documents — to the initial prompt in non-interactive mode:
+The `/sandbox policy` command *(v1.0.79+)* lets you view and adjust the active sandbox policy for the current session without restarting the CLI:
+
+```
+/sandbox policy          # display the current sandbox policy
+/sandbox policy strict   # apply a stricter policy
+/sandbox policy off      # disable the sandbox for this session
+```
+
+This is the in-session complement to the `--sandbox`/`--no-sandbox` startup flags — use it when you need to change sandbox behavior mid-session rather than restarting.
+
+The `/permissions` command *(v1.0.78+)* shows all currently granted tool permissions for the active session. This gives you a quick overview of which tools the agent has been allowed to use — useful for auditing before a long-running autonomous task or when debugging unexpected tool behavior:
+
+```
+/permissions             # list current session tool permissions
+```
+
+The `/app` command *(v1.0.79+)* opens the GitHub Copilot app interface or links the current session to an app context, allowing you to switch between CLI and the Copilot app for the same task:
+
+```
+/app                     # open the Copilot app or link to an app session
+```
+
+ (available in prompt mode, `-p`) lets you attach files — images or native documents — to the initial prompt in non-interactive mode:
 
 ```bash
 copilot -p "Summarize the architecture shown in these diagrams" \
@@ -784,7 +821,9 @@ copilot --config-dir ~/.my-copilot-config
 
 Set `COPILOT_HOME` in your shell profile to use a custom config directory across all sessions. This is especially useful when running multiple Copilot configurations for different projects or teams.
 
-### Shell Completion
+### Authentication
+
+*(v1.0.78+)* When running on a **local desktop**, GitHub Copilot CLI now defaults to **browser-based login** rather than device-code flow. After running `copilot auth login`, the CLI opens your browser automatically to complete the OAuth flow — no need to copy and paste a device code. The device-code flow remains available as a fallback for headless environments (e.g., remote servers over SSH) where a browser cannot be opened.
 
 The `copilot completion` subcommand generates a static shell completion script for subcommands, flags, and known option values. Once installed, pressing Tab auto-completes Copilot CLI commands in your terminal.
 
