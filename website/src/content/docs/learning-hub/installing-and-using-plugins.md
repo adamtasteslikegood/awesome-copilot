@@ -3,7 +3,7 @@ title: 'Installing and Using Plugins'
 description: 'Learn how to find, install, and manage plugins that extend GitHub Copilot CLI with reusable agents, skills, hooks, and integrations.'
 authors:
   - GitHub Copilot Learning Hub Team
-lastUpdated: 2026-07-13
+lastUpdated: 2026-08-11
 estimatedReadingTime: '8 minutes'
 tags:
   - plugins
@@ -73,6 +73,8 @@ The `plugin.json` manifest declares what the plugin contains:
   ]
 }
 ```
+
+*(v1.0.74+)* Copilot CLI also supports the **Open Plugin Spec v1** manifest format and `mcp.json` configuration files, making it compatible with plugins authored for other MCP-compatible AI tools.
 
 ## Why Use Plugins?
 
@@ -221,6 +223,26 @@ copilot plugin marketplace update
 # Remove a plugin
 copilot plugin uninstall my-plugin
 ```
+
+### Automatic Updates
+
+*(v1.0.78+)* **First-party plugins** (from the official `copilot-plugins` marketplace) automatically update to the latest version each time a session starts, so you always get the newest capabilities without running `plugin update` manually.
+
+*(v1.0.79+)* For **external marketplace entries**, you can opt into automatic updates by setting `"autoUpdate": true` in your marketplace configuration:
+
+```json
+{
+  "extraKnownMarketplaces": [
+    {
+      "name": "my-org-plugins",
+      "source": "my-org/internal-plugins",
+      "autoUpdate": true
+    }
+  ]
+}
+```
+
+With `autoUpdate` enabled, the marketplace's plugin catalog is refreshed and installed plugins are updated to the latest version at each session start. Omit `autoUpdate` (or set it to `false`) to pin versions and update manually.
 
 ### Loading Plugins from a Local Directory
 
