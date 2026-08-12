@@ -3,7 +3,7 @@ title: 'Copilot Configuration Basics'
 description: 'Learn how to configure GitHub Copilot at user, workspace, and repository levels to optimize your AI-assisted development experience.'
 authors:
   - GitHub Copilot Learning Hub Team
-lastUpdated: 2026-07-13
+lastUpdated: 2026-08-12
 estimatedReadingTime: '10 minutes'
 tags:
   - configuration
@@ -449,6 +449,10 @@ The model picker opens in a **full-screen view** with inline reasoning effort ad
 
 **Model family aliases** (v1.0.64+): Instead of typing a full model name, you can use short family aliases in the model setting: `opus`, `sonnet`, `haiku` (Anthropic), and `gpt`, `gemini` (Google/OpenAI). The CLI resolves the alias to the latest available model in that family. This is especially useful in scripts or configuration files where you want to track the best model in a family without hardcoding a version string.
 
+**Model picker groups** *(v1.0.79+)*: The model picker organizes models into sections — **Recent**, **Recommended**, **New**, and others — so you can quickly find the model you want. Press **Shift+Tab** in the model picker to switch between grouping views.
+
+**`/model` is session-scoped by default** *(v1.0.79+)*: The `/model` command now sets the model for the current session only. To set a persistent default model for future sessions, use `/config model` instead. This change keeps per-session model choices isolated without accidentally overwriting your preferences.
+
 ### CLI Session Commands
 
 The `/settings` command (v1.0.61+) opens an interactive dialog to browse and edit all user settings in one place. Use it to discover available settings, toggle options, and update values without manually editing your config file:
@@ -557,6 +561,22 @@ This creates a branch named from your task description and begins working on it 
 
 After the command runs, the session is inside the new worktree. Use this when you want to work on a second task in parallel without stashing changes or opening a new terminal. In v1.0.64+ you can also use the experimental `--worktree` flag at startup (`copilot -w [name]`) to create or reuse a worktree under `<repo>.worktrees/` before the session begins.
 
+**`/worktree new`** *(v1.0.79+)*: Use `/worktree new` to start a new session in a brand-new worktree without bringing along the current session's changes:
+
+```
+/worktree new
+```
+
+This is useful when you want a clean slate in parallel — for example, starting a fresh bug-fix branch while your current session continues refactoring.
+
+**`worktreeBaseRef` setting** *(v1.0.79+)*: By default, `/worktree`, `/worktree new`, and `--worktree` all start from `HEAD`. Set `worktreeBaseRef` in your config to `"remote"` if you want new worktrees to start from the remote default branch instead:
+
+```json
+{
+  "worktreeBaseRef": "remote"
+}
+```
+
 The `/every` command (also available as `/loop` since v1.0.64) schedules a recurring prompt to run automatically at a specified interval. The companion `/after` command runs a prompt once after a specified delay. Both are useful for self-paced automation — polling for results, periodically summarizing progress, or triggering other slash commands on a timer:
 
 ```
@@ -571,6 +591,8 @@ The interval can be specified in seconds (`s`), minutes (`m`), or hours (`h`), a
 > **Experimental**: `/every`, `/loop`, and `/after` are part of the experimental feature set. They appear in the `/experimental` slash command list — enable experimental features if they are not already visible in your current session.
 
 > **Note**: Scheduled prompts run in the background of the current session and use your active model. They share the session context window, so very frequent scheduling with long responses may consume context rapidly. Use `/compact` if context usage becomes a concern.
+
+**Prompt and command queuing** *(v1.0.79+)*: You can queue prompts, shell commands, and supported slash commands in a local session to run in order after the current task finishes. This lets you line up a series of steps — for example, a build, a test run, and a commit — without waiting for each to complete before typing the next one. Type the next prompt or command while the current task is still running; it will be held and executed automatically when the current task is done.
 
 The `/pr auto` command *(v1.0.66+)* starts a self-paced automation loop that drives the current pull request to CI green. Rather than running continuously, it fixes one failing item per run and paces itself around CI checks to avoid redundant work:
 
@@ -744,6 +766,14 @@ copilot --plan          # start in plan mode (propose without executing)
 
 This is useful in scripts or CI pipelines where you want the CLI to immediately begin working in a specific mode without an interactive prompt.
 
+*(v1.0.79+)* You can combine `--plan` with `--mode autopilot` to have Copilot generate a plan first, then immediately execute it in autopilot mode without waiting for your approval:
+
+```bash
+copilot --plan --mode autopilot "Refactor the auth module to use the new token API"
+```
+
+This is handy for well-defined, low-risk tasks where you trust the plan will be correct and want to avoid the manual "approve plan → run" step.
+
 The `--max-autopilot-continues` flag controls how many times Copilot can automatically continue in autopilot mode before pausing for confirmation. The default is 5:
 
 ```bash
@@ -760,6 +790,18 @@ copilot --no-sandbox -p "Set up development environment with system tools"
 ```
 
 These flags apply only to the current invocation — your persisted sandbox preference remains unchanged.
+
+**`/sandbox policy`** *(v1.0.79+)*: Run `/sandbox policy` from inside a session to display the effective sandbox configuration — which paths are allowed or read-only, which network access rules apply, and which settings are currently active or disabled (and why). This is useful for debugging sandbox-related permission errors and understanding exactly what the agent can and cannot do.
+
+**`allowDevToolAccess` sandbox setting** *(v1.0.79+)*: The `allowDevToolCaches` setting has been **renamed** to `allowDevToolAccess`. The new name better reflects that the setting controls access to dev-tool configuration and registries in addition to caches. If you have `allowDevToolCaches` in your `settings.json`, rename it — the old key is ignored silently, so an existing `false` opt-out would revert to the default (enabled).
+
+```json
+{
+  "sandbox": {
+    "allowDevToolAccess": false
+  }
+}
+```
 
 The `--attachment` flag (available in prompt mode, `-p`) lets you attach files — images or native documents — to the initial prompt in non-interactive mode:
 
