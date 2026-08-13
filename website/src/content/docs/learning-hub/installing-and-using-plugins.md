@@ -3,7 +3,7 @@ title: 'Installing and Using Plugins'
 description: 'Learn how to find, install, and manage plugins that extend GitHub Copilot CLI with reusable agents, skills, hooks, and integrations.'
 authors:
   - GitHub Copilot Learning Hub Team
-lastUpdated: 2026-07-13
+lastUpdated: 2026-08-13
 estimatedReadingTime: '8 minutes'
 tags:
   - plugins
@@ -203,6 +203,58 @@ Or from an interactive session:
 ### From VS Code
 
 Browse to the plugin via `@agentPlugins` in the Extensions search view or via **Chat: Plugins** in the Command Palette, then click **Install**.
+
+## Open Plugin Spec v1
+
+*(v1.0.74+)* Copilot CLI supports the **Open Plugin Spec v1** manifest format, which uses an `mcp.json` configuration file alongside the plugin manifest. This is an industry-standard format that improves interoperability between AI tools.
+
+A plugin using Open Plugin Spec v1 can declare its MCP server configuration directly in `mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "my-server": {
+      "command": "npx",
+      "args": ["-y", "my-mcp-package"]
+    }
+  }
+}
+```
+
+If you encounter a plugin repository that ships an `mcp.json` instead of `.mcp.json` or `.github/mcp.json`, it is using Open Plugin Spec v1 and will work with Copilot CLI v1.0.74 or later.
+
+## Enabling and Disabling Plugin Components
+
+*(v1.0.76+)* You can selectively enable or disable individual components of installed plugins — agents, instructions, hooks, MCP servers, and skills — without uninstalling the plugin:
+
+```
+/plugins enable --plugin my-plugin
+/plugins disable --plugin my-plugin
+/plugins disable --agent api-architect
+/plugins disable --skill database-migrations
+```
+
+This is useful when a plugin bundles several agents and you only want to activate specific ones, or when you want to temporarily disable a hook without removing it permanently.
+
+## Auto-Updating Plugins
+
+*(v1.0.78+)* First-party plugins (from the official `copilot-plugins` marketplace) automatically update to their latest version when a new CLI session starts. No manual update command is needed.
+
+For plugins from extra marketplaces, you can opt into auto-updates by adding `"autoUpdate": true` to the marketplace entry in your settings:
+
+```json
+{
+  "extraKnownMarketplaces": [
+    {
+      "name": "my-org-plugins",
+      "source": "my-org/internal-plugins",
+      "autoUpdate": true
+    }
+  ]
+}
+```
+
+With `autoUpdate` enabled, plugins from that marketplace are refreshed at the start of each session — useful for teams that want everyone on the latest version automatically.
 
 ## Managing Plugins
 
