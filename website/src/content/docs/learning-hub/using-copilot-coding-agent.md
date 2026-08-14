@@ -3,7 +3,7 @@ title: 'Using the Copilot Coding Agent'
 description: 'Learn how to use GitHub Copilot coding agent to autonomously work on issues, generate pull requests, and automate development tasks.'
 authors:
   - GitHub Copilot Learning Hub Team
-lastUpdated: 2026-05-13
+lastUpdated: 2026-08-14
 estimatedReadingTime: '12 minutes'
 tags:
   - coding-agent
@@ -376,6 +376,45 @@ Since v1.0.47, `--resume` also surfaces **cloud agent sessions that haven't yet 
 | No PR required | You can steer tasks that haven't yet opened a pull request |
 
 > **Note**: Remote control replaces the earlier "steering" feature. If you see references to steering in older documentation, remote control is the updated equivalent.
+
+## Planning and Autopilot
+
+The `--plan` flag and `--mode autopilot` can be combined to create a plan-then-implement workflow without manual approval between phases:
+
+```bash
+copilot --plan --mode autopilot
+```
+
+This tells the agent to:
+1. Generate a plan for the task
+2. Immediately proceed to implementation without waiting for your approval of the plan
+
+This is useful for well-scoped tasks where you trust the agent's judgment and want to reduce interruptions. For more complex or sensitive changes, omit `--mode autopilot` to review the plan before implementation begins.
+
+### Queuing Prompts and Commands
+
+In local interactive sessions, you can queue prompts, shell commands, and supported slash commands to run in order after the current task finishes:
+
+- While an agent turn is running, type your next prompt — it queues automatically
+- The queued prompt executes immediately when the current turn completes
+- Use **"pending · ctrl+c to cancel"** to track in-flight steering prompts
+
+This makes it easy to chain sequential tasks without waiting at the terminal.
+
+## Controlling Permissions
+
+The `/permissions` command lets you switch approval modes at any time during a session:
+
+```
+/permissions
+```
+
+This opens a dialog to choose between:
+- **Auto** — the agent proceeds without asking for tool approvals
+- **Manual** — the agent asks before each tool use
+- **Custom** — fine-grained control over which tools require approval
+
+Switching permissions mid-session is useful when you want to give the agent more autonomy for a trusted task, then tighten control again afterward.
 
 ## Hooks and the Coding Agent
 
