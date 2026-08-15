@@ -3,7 +3,7 @@ title: 'Using the Copilot Coding Agent'
 description: 'Learn how to use GitHub Copilot coding agent to autonomously work on issues, generate pull requests, and automate development tasks.'
 authors:
   - GitHub Copilot Learning Hub Team
-lastUpdated: 2026-05-13
+lastUpdated: 2026-08-15
 estimatedReadingTime: '12 minutes'
 tags:
   - coding-agent
@@ -333,6 +333,38 @@ This repository provides a curated collection of agents, skills, and hooks desig
 4. The hooks will run automatically during coding agent sessions
 
 > **Example workflow**: Combine a `test-specialist` agent with a `database-migrations` skill and a linting hook. Assign an issue to the coding agent using the test-specialist agent — it will automatically pick up the migrations skill when relevant, and the hook ensures all code is formatted before completion.
+
+## Working in Parallel with Worktrees
+
+*(v1.0.79+)* Use `/worktree new` to start a new session in a fresh git worktree, letting multiple agents work on different tasks simultaneously without interfering with each other:
+
+```
+/worktree new
+```
+
+This creates a new worktree branched from `HEAD` (by default) and opens a new session in it. All worktrees share the same repository, so changes in one don't affect the others until you merge.
+
+**Controlling the base branch**: The `worktreeBaseRef` setting controls whether `/worktree`, `/worktree new`, and `--worktree` start from `HEAD` or the remote default branch. All three default to `HEAD`:
+
+```json
+{
+  "worktreeBaseRef": "origin/main"
+}
+```
+
+This is especially useful when you want each new task to start from the latest merged state rather than your current working branch.
+
+## Plan-then-Implement Autopilot
+
+*(v1.0.79+)* Combine `--plan` with `--mode autopilot` to have Copilot generate a plan first and then implement it autonomously — without pausing for your approval between the two phases:
+
+```bash
+copilot --plan --mode autopilot -p "Add rate limiting to the login endpoint"
+```
+
+This is ideal for well-defined tasks where you trust the implementation to proceed once a plan is formed. The agent plans the changes, then executes them in autopilot mode all in one uninterrupted run.
+
+If you want to review the plan before implementation, omit `--mode autopilot` and Copilot will pause after planning for your feedback.
 
 ## Remote Control
 
