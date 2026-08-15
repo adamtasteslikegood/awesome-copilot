@@ -3,7 +3,7 @@ title: 'Installing and Using Plugins'
 description: 'Learn how to find, install, and manage plugins that extend GitHub Copilot CLI with reusable agents, skills, hooks, and integrations.'
 authors:
   - GitHub Copilot Learning Hub Team
-lastUpdated: 2026-07-13
+lastUpdated: 2026-08-15
 estimatedReadingTime: '8 minutes'
 tags:
   - plugins
@@ -160,6 +160,26 @@ To automatically register an additional marketplace for everyone working in a re
 
 With this in place, team members automatically get the `my-org-plugins` marketplace available without running a separate `marketplace add` command. This replaces the older `marketplaces` setting, which was removed in v1.0.16.
 
+### Auto-Updating Marketplace Plugins
+
+*(v1.0.79+)* To keep plugins from a specific marketplace always up to date, set `"autoUpdate": true` in the marketplace entry in your user settings:
+
+```json
+{
+  "extraKnownMarketplaces": [
+    {
+      "name": "my-org-plugins",
+      "source": "my-org/internal-plugins",
+      "autoUpdate": true
+    }
+  ]
+}
+```
+
+With `autoUpdate` enabled, plugins from that marketplace are automatically updated to the latest version at session start. This is ideal for team-managed marketplaces where you always want the newest plugin versions without running `copilot plugin update` manually.
+
+> **Note**: First-party plugins (from the built-in `copilot-plugins` marketplace) automatically update at session start regardless of this setting, as of v1.0.78.
+
 ### Pinning a Marketplace to a Specific Commit
 
 *(v1.0.70+)* To ensure reproducibility and prevent unintended updates, you can pin a marketplace to an exact commit SHA using the `sha` field in the source configuration:
@@ -204,7 +224,7 @@ Or from an interactive session:
 
 Browse to the plugin via `@agentPlugins` in the Extensions search view or via **Chat: Plugins** in the Command Palette, then click **Install**.
 
-## Managing Plugins
+## Managing Plugin State
 
 Once installed, plugins are managed with a few simple commands:
 
@@ -221,6 +241,25 @@ copilot plugin marketplace update
 # Remove a plugin
 copilot plugin uninstall my-plugin
 ```
+
+### Enabling and Disabling Plugins
+
+*(v1.0.76+)* You can enable or disable installed plugins, their agents, skills, hooks, and MCP servers individually without uninstalling them — useful for temporarily turning off a plugin that conflicts with your current work:
+
+```
+/plugins enable my-plugin
+/plugins disable my-plugin
+```
+
+You can also target specific components within a plugin:
+
+```
+/plugins disable --plugin my-plugin    # disable the whole plugin
+/plugins disable --mcp my-mcp-server   # disable a specific MCP server
+/plugins disable --skill my-skill      # disable a specific skill
+```
+
+Changes take effect for the current session immediately and persist until you re-enable them.
 
 ### Loading Plugins from a Local Directory
 
