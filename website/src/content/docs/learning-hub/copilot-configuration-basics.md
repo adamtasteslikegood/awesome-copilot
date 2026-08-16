@@ -3,7 +3,7 @@ title: 'Copilot Configuration Basics'
 description: 'Learn how to configure GitHub Copilot at user, workspace, and repository levels to optimize your AI-assisted development experience.'
 authors:
   - GitHub Copilot Learning Hub Team
-lastUpdated: 2026-07-13
+lastUpdated: 2026-08-16
 estimatedReadingTime: '10 minutes'
 tags:
   - configuration
@@ -470,6 +470,8 @@ The settings dialog supports search — type to filter settings by name. Changes
 
 These flags mirror the **Repo** and **Repo (local)** scope tabs available in the `/settings` dashboard (v1.0.71+), making it easier to manage per-repository vs. user-global configuration without ambiguity. In v1.0.71+, the `/settings` dashboard also shows **Repo** and **Repo (local)** tabs alongside the existing user-level view, giving you a unified place to see which settings are applied at each layer.
 
+> **Model scoping change (v1.0.79+)**: `/model` is now **session-scoped by default** — a model selection applies only to the current session and does not persist to future sessions. To set a persistent model default for future sessions, use **`/config model`** (or `/config model <model-id>` to set a specific model directly). This change makes per-session model switching feel lighter while keeping persistent preferences explicit.
+
 GitHub Copilot CLI has two commands for managing session state, with distinct behaviours:
 
 | Command | Behaviour |
@@ -506,6 +508,14 @@ The `/session delete` command removes sessions you no longer need:
 You can also press **x** on a highlighted session in the session picker (`--resume`) to delete it directly from the list.
 
 In the session picker, press **`s`** to cycle the sort order: relevance, last used, created, or name. The picker also shows the branch name and idle/in-use status for each session.
+
+The **Sessions sidebar** *(v1.0.79+)* provides an always-visible panel for managing multiple concurrent sessions without opening the full session picker. It shows all active sessions and their status at a glance, and lets you switch between them, spawn new sessions, and monitor what each is doing — all from a persistent sidebar column:
+
+```
+/sessions           # open the Sessions sidebar
+```
+
+The sidebar is particularly useful when running several parallel tasks (e.g., multiple `/worktree` branches or `/fleet` subagents) and you want to keep an eye on all of them simultaneously.
 
 The `/rewind` command opens a timeline picker that lets you roll back the conversation to any earlier point in history, reverting both the conversation and any file changes made after that point. You can also trigger it by pressing **double-Esc**:
 
@@ -556,6 +566,15 @@ In v1.0.66+, you can pass a task description to `/worktree` to name the branch f
 This creates a branch named from your task description and begins working on it immediately, making it easy to spin up parallel work without stopping to think of a branch name.
 
 After the command runs, the session is inside the new worktree. Use this when you want to work on a second task in parallel without stashing changes or opening a new terminal. In v1.0.64+ you can also use the experimental `--worktree` flag at startup (`copilot -w [name]`) to create or reuse a worktree under `<repo>.worktrees/` before the session begins.
+
+The `/worktree new` command *(v1.0.79+)* is a variation that creates a new worktree and opens it in a **new separate session**, leaving your current session untouched. This is useful when you want to start parallel work in a fresh context without leaving your current conversation:
+
+```
+/worktree new                    # create a new worktree in a new session
+/worktree new fix-the-auth-bug   # create a named worktree in a new session
+```
+
+> **`worktreeBaseRef` setting** *(v1.0.79+)*: By default, `/worktree`, `/worktree new`, and `--worktree` all start from HEAD. If you want them to start from the remote default branch instead, set `worktreeBaseRef` to `"remote-default"` in your user settings.
 
 The `/every` command (also available as `/loop` since v1.0.64) schedules a recurring prompt to run automatically at a specified interval. The companion `/after` command runs a prompt once after a specified delay. Both are useful for self-paced automation — polling for results, periodically summarizing progress, or triggering other slash commands on a timer:
 
@@ -743,6 +762,14 @@ copilot --plan          # start in plan mode (propose without executing)
 ```
 
 This is useful in scripts or CI pipelines where you want the CLI to immediately begin working in a specific mode without an interactive prompt.
+
+> **Plan-then-autopilot (v1.0.79+)**: Combine `--plan` with `--mode autopilot` to have the CLI first plan a task (proposing changes without executing), and then automatically proceed to implement the plan in autopilot mode — all without waiting for manual approval between phases:
+>
+> ```bash
+> copilot --plan --mode autopilot -p "Refactor the auth module to use JWT"
+> ```
+>
+> This is useful for batch automation where you want the plan/review step built into the run without interactive confirmation.
 
 The `--max-autopilot-continues` flag controls how many times Copilot can automatically continue in autopilot mode before pausing for confirmation. The default is 5:
 
