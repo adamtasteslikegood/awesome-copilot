@@ -3,7 +3,7 @@ title: 'Copilot Configuration Basics'
 description: 'Learn how to configure GitHub Copilot at user, workspace, and repository levels to optimize your AI-assisted development experience.'
 authors:
   - GitHub Copilot Learning Hub Team
-lastUpdated: 2026-07-13
+lastUpdated: 2026-08-18
 estimatedReadingTime: '10 minutes'
 tags:
   - configuration
@@ -429,6 +429,7 @@ CLI settings use **camelCase** naming. Key settings added in recent releases:
 | `proxy` | HTTP(S) proxy URL for all outbound CLI requests (e.g., `http://proxy.example.com:8080`) (v1.0.64+) |
 | `sessionLimits` | Restrict credit or turn usage for a session; limits apply across the current conversation and reset on `/clear` (v1.0.66+) |
 | `stayInAutopilot` | Keep the CLI in autopilot mode after an autopilot task completes, instead of returning to interactive mode (v1.0.69+) |
+| `worktreeBaseRef` | Controls whether `/worktree`, `/worktree new`, and `--worktree` start from `HEAD` or the remote default branch. Defaults to `HEAD` (v1.0.79+) |
 
 > **Note**: Older snake_case names (e.g., `include_gitignored`, `auto_updates_channel`) are still accepted for backward compatibility, but camelCase is now the preferred format.
 
@@ -448,6 +449,8 @@ The model picker opens in a **full-screen view** with inline reasoning effort ad
 **Auto mode and server-side model routing** (v1.0.43+): When you select **Auto** as your model, the CLI uses server-side model routing for real-time model selection. Instead of locking in a single model at session start, Auto mode evaluates each request and routes it to the most appropriate model dynamically. This means straightforward questions can be handled by a faster model while complex reasoning tasks are automatically escalated — without you needing to switch models manually.
 
 **Model family aliases** (v1.0.64+): Instead of typing a full model name, you can use short family aliases in the model setting: `opus`, `sonnet`, `haiku` (Anthropic), and `gpt`, `gemini` (Google/OpenAI). The CLI resolves the alias to the latest available model in that family. This is especially useful in scripts or configuration files where you want to track the best model in a family without hardcoding a version string.
+
+**Model groupings** (v1.0.79+): The model picker groups models into **Recent**, **Recommended**, **New**, and other sections so you can quickly find frequently-used or newly-added models. Press **Shift+Tab** to switch between grouping views (for example, to browse all models alphabetically instead of by category).
 
 ### CLI Session Commands
 
@@ -556,6 +559,25 @@ In v1.0.66+, you can pass a task description to `/worktree` to name the branch f
 This creates a branch named from your task description and begins working on it immediately, making it easy to spin up parallel work without stopping to think of a branch name.
 
 After the command runs, the session is inside the new worktree. Use this when you want to work on a second task in parallel without stashing changes or opening a new terminal. In v1.0.64+ you can also use the experimental `--worktree` flag at startup (`copilot -w [name]`) to create or reuse a worktree under `<repo>.worktrees/` before the session begins.
+
+The `/worktree new` command *(v1.0.79+)* starts a **new session** in a freshly created worktree, rather than moving your current session into one:
+
+```
+/worktree new              # open a new session in a new worktree
+/worktree new my-feature   # open a new session on a named branch
+```
+
+Use `/worktree new` when you want to dispatch parallel work without leaving your current session — the new session launches in the background and you can switch to it from the session picker.
+
+The `worktreeBaseRef` setting *(v1.0.79+)* controls whether `/worktree`, `/worktree new`, and `--worktree` start from `HEAD` (the current commit) or the remote default branch. All three now default to `HEAD`:
+
+```json
+{
+  "worktreeBaseRef": "HEAD"         // default — branch from current commit
+}
+```
+
+Set it to the remote default branch name (for example `"main"`) if you prefer worktrees to always branch from the latest remote state rather than your current working tree.
 
 The `/every` command (also available as `/loop` since v1.0.64) schedules a recurring prompt to run automatically at a specified interval. The companion `/after` command runs a prompt once after a specified delay. Both are useful for self-paced automation — polling for results, periodically summarizing progress, or triggering other slash commands on a timer:
 
@@ -715,6 +737,8 @@ Use `/autopilot` when you want to flip between supervised and unsupervised opera
 
 > **Auto allow-all mode (v1.0.69+)**: In addition to the standard allow-all mode (which approves everything), the CLI now supports an **auto allow-all** mode that uses an LLM judge to evaluate each tool request. When enabled, the judge automatically approves requests it evaluates as acceptable, and asks you for manual confirmation only for requests it considers risky. This gives you a middle ground between full autopilot and fully supervised operation — most routine actions proceed automatically while unusual or potentially dangerous actions still surface for your review. As of v1.0.69-3, this mode requires experimental features to be enabled — use `/experimental on` or start the CLI with `--experimental` — then activate it with `/allow-all auto`. The previous `AUTO_APPROVAL` environment variable approach has been removed in favour of experimental mode.
 
+> **Enterprise allow-auto-only policy (v1.0.79+)**: Enterprise administrators can configure an **allow-auto-only** policy that permits the auto mode (`/allow-all auto`) while blocking full unrestricted allow-all (`/allow-all on`). This lets organizations offer the convenience of auto-approval with AI oversight while preventing fully unattended tool execution. When this policy is active, `/allow-all auto` works as usual but `/allow-all on` is rejected with a policy message.
+
 > **Read-only `gh` CLI commands (v1.0.46+)**: Read-only `gh` commands — such as `gh issue list`, `gh pr view`, `gh run status`, and other commands that don't write to GitHub — are **automatically approved** without a permission prompt. Only commands that write to GitHub (like creating issues, merging PRs) still require explicit approval. This reduces friction during exploratory sessions where you frequently check issue or PR status.
 
 The `--effort` flag (shorthand for `--reasoning-effort`) controls how much computational reasoning the model applies to a request:
@@ -744,6 +768,14 @@ copilot --plan          # start in plan mode (propose without executing)
 
 This is useful in scripts or CI pipelines where you want the CLI to immediately begin working in a specific mode without an interactive prompt.
 
+You can also combine `--plan` with `--mode autopilot` *(v1.0.79+)* to have the agent first produce a plan, then immediately implement it in autopilot mode without waiting for manual approval:
+
+```bash
+copilot --plan --mode autopilot "Refactor the authentication module"
+```
+
+This is useful for well-understood tasks where you want a plan recorded (for audit or review purposes) but don't need to approve each step manually.
+
 The `--max-autopilot-continues` flag controls how many times Copilot can automatically continue in autopilot mode before pausing for confirmation. The default is 5:
 
 ```bash
@@ -760,6 +792,18 @@ copilot --no-sandbox -p "Set up development environment with system tools"
 ```
 
 These flags apply only to the current invocation — your persisted sandbox preference remains unchanged.
+
+The `/sandbox policy` command *(v1.0.79+)* displays the **effective sandbox configuration** for the current session — which paths are allowed or read-only, which network connections are blocked, and what denials have been recorded:
+
+```
+/sandbox policy
+```
+
+Use `/sandbox policy` to diagnose sandbox-related failures (such as a tool that can't write to a directory or can't reach the network) without having to inspect log files manually. The output shows you the active rules so you can decide whether to adjust your sandbox settings or add a path exception.
+
+> **BREAKING (v1.0.79+)**: The `allowDevToolCaches` sandbox setting has been **renamed to `allowDevToolAccess`**, since it now grants access to dev-tool configuration files and package registries in addition to caches. The old key is no longer read — an existing `"allowDevToolCaches": false` opt-out silently reverts to the default (`true`). If you have `allowDevToolCaches` in `settings.json` or a managed/MDM policy, rename it to `allowDevToolAccess`.
+
+> **Sandbox auth settings moved (v1.0.79+)**: The `/sandbox` configuration dialog now groups git, `gh` CLI, and (on macOS) keychain credentials under a new **Auth** tab. The corresponding settings keys have moved: `sandbox.gitAuth` → `sandbox.auth.git` and `sandbox.ghAuth` → `sandbox.auth.gh`. The old keys are ignored in settings files — update any stored configurations or MDM policies that reference them.
 
 The `--attachment` flag (available in prompt mode, `-p`) lets you attach files — images or native documents — to the initial prompt in non-interactive mode:
 
