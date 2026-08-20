@@ -3,7 +3,7 @@ title: 'Installing and Using Plugins'
 description: 'Learn how to find, install, and manage plugins that extend GitHub Copilot CLI with reusable agents, skills, hooks, and integrations.'
 authors:
   - GitHub Copilot Learning Hub Team
-lastUpdated: 2026-07-13
+lastUpdated: 2026-08-20
 estimatedReadingTime: '8 minutes'
 tags:
   - plugins
@@ -36,6 +36,8 @@ A plugin bundles one or more of the following components:
 | **Extensions** | IDE extensions installable via the plugin marketplace (v1.0.62+) | `extensions/` |
 
 A plugin might include all of these or just one — for example, a plugin could provide a single specialized agent, or an entire development toolkit with multiple agents, skills, hooks, and MCP server configurations working together.
+
+*(v1.0.74+)* Copilot CLI also supports **Open Plugin Spec v1** manifests, making it compatible with plugins authored for other compatible runtimes. If a plugin ships a standard `mcp.json` configuration file alongside its `plugin.json`, the CLI reads it for MCP server configuration automatically — no manual MCP setup required.
 
 ### Example: What a Plugin Looks Like
 
@@ -221,6 +223,28 @@ copilot plugin marketplace update
 # Remove a plugin
 copilot plugin uninstall my-plugin
 ```
+
+*(v1.0.78+)* **First-party plugins update automatically** at session start — you always get the latest version without running a manual update command.
+
+*(v1.0.76+)* The **`/plugins` command** provides a unified interactive panel to enable, disable, update, and remove plugins, MCP servers, skills, instructions, agents, LSP servers, and hooks — all without leaving your current session:
+
+```
+/plugins                        # open the plugin management panel
+/plugins enable my-plugin       # enable a specific plugin
+/plugins disable my-plugin      # temporarily disable a plugin without uninstalling
+/plugins update my-plugin       # update a plugin to the latest version
+/plugins remove my-plugin       # remove a plugin
+```
+
+You can also target individual components with flags:
+
+```
+/plugins disable --mcp my-server      # disable an MCP server
+/plugins disable --skill my-skill     # disable a skill
+/plugins disable --agent my-agent     # disable an agent
+```
+
+Disabled plugins remain installed but inactive — useful for temporarily turning off a plugin without losing your installation.
 
 ### Loading Plugins from a Local Directory
 

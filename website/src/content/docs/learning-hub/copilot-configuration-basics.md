@@ -3,7 +3,7 @@ title: 'Copilot Configuration Basics'
 description: 'Learn how to configure GitHub Copilot at user, workspace, and repository levels to optimize your AI-assisted development experience.'
 authors:
   - GitHub Copilot Learning Hub Team
-lastUpdated: 2026-07-13
+lastUpdated: 2026-08-20
 estimatedReadingTime: '10 minutes'
 tags:
   - configuration
@@ -429,6 +429,8 @@ CLI settings use **camelCase** naming. Key settings added in recent releases:
 | `proxy` | HTTP(S) proxy URL for all outbound CLI requests (e.g., `http://proxy.example.com:8080`) (v1.0.64+) |
 | `sessionLimits` | Restrict credit or turn usage for a session; limits apply across the current conversation and reset on `/clear` (v1.0.66+) |
 | `stayInAutopilot` | Keep the CLI in autopilot mode after an autopilot task completes, instead of returning to interactive mode (v1.0.69+) |
+| `worktreeBaseRef` | Controls whether `/worktree` and `--worktree` start from `HEAD` (default) or the remote default branch (v1.0.79+) |
+| `pinnedPrompts` | Show the current prompt as a pinned line in the UI; defaults to `false` (v1.0.79+) |
 
 > **Note**: Older snake_case names (e.g., `include_gitignored`, `auto_updates_channel`) are still accepted for backward compatibility, but camelCase is now the preferred format.
 
@@ -445,9 +447,30 @@ These files follow the same format as `config.json` and are loaded after the glo
 
 The model picker opens in a **full-screen view** with inline reasoning effort adjustment. Use the **← / →** arrow keys to change the reasoning effort level (`low`, `medium`, `high`) directly from the picker without leaving the session. The current reasoning effort level is also displayed in the model header (e.g., `claude-sonnet-4.6 (high)`) so you always know which level is active.
 
+*(v1.0.79+)* The model picker groups models into **Recent**, **Recommended**, **New**, and other sections for easier discovery. Use **Shift+Tab** to cycle between grouping views.
+
 **Auto mode and server-side model routing** (v1.0.43+): When you select **Auto** as your model, the CLI uses server-side model routing for real-time model selection. Instead of locking in a single model at session start, Auto mode evaluates each request and routes it to the most appropriate model dynamically. This means straightforward questions can be handled by a faster model while complex reasoning tasks are automatically escalated — without you needing to switch models manually.
 
 **Model family aliases** (v1.0.64+): Instead of typing a full model name, you can use short family aliases in the model setting: `opus`, `sonnet`, `haiku` (Anthropic), and `gpt`, `gemini` (Google/OpenAI). The CLI resolves the alias to the latest available model in that family. This is especially useful in scripts or configuration files where you want to track the best model in a family without hardcoding a version string.
+
+**Session-scoped model selection** *(v1.0.79+)*: `/model` is now **session-scoped by default** — it changes the model for the current session only and does not persist to future sessions. To set your default model for all future sessions, use the new `/config model` command:
+
+```
+/model claude-sonnet-4.6   # set model for this session only
+/config model              # set the default model for future sessions
+```
+
+This separates per-session experimentation from your persistent preference. The `/model --local` and `/model --repo` flags continue to work for reading and writing user-level or repository-level model settings.
+
+**Plan-mode model** *(v1.0.74+)*: Use `/model plan` (or `/model --plan`) to pick a dedicated model used while in plan mode, keeping a fast model for planning and a more powerful one for implementation:
+
+```
+/model plan claude-sonnet-4.6   # use this model in plan mode
+/model --plan                   # open the picker scoped to plan mode
+/model plan off                 # clear the plan-mode override
+```
+
+When you leave plan mode, the session reverts to the main session model.
 
 ### CLI Session Commands
 
@@ -478,6 +501,8 @@ GitHub Copilot CLI has two commands for managing session state, with distinct be
 | `/clear [prompt]` | Abandons the current session entirely and starts a new one. Backgrounded sessions are not affected. MCP servers configured in your project are preserved in the new session. |
 
 Both commands accept an optional prompt argument to seed the new session with an opening message, for example `/new Add error handling to the login flow`.
+
+**Multiple concurrent sessions** *(v1.0.79+)*: The CLI supports managing multiple active sessions from a **Sessions tab** and sidebar, so you can switch between in-flight tasks without leaving the terminal. Open the sidebar to see all running sessions, spawn new ones, and check their status at a glance. The Sessions tab in the split-view UI shows each session's current state and lets you navigate between them with a single keystroke.
 
 The `/session rename` command renames the current session. When called **without a name argument**, it automatically generates a session name based on the conversation history:
 
@@ -512,6 +537,8 @@ The `/rewind` command opens a timeline picker that lets you roll back the conver
 ```
 /rewind
 ```
+
+*(v1.0.78+)* `/rewind` no longer requires git. It restores only the files that Copilot changed in the session, skipping any file whose contents no longer match what Copilot last wrote. You can choose to revert just the conversation, or both the conversation and the modified files.
 
 Use `/rewind` when you want to branch off from a different point in the conversation, rather than just undoing the most recent turn.
 
@@ -554,6 +581,21 @@ In v1.0.66+, you can pass a task description to `/worktree` to name the branch f
 ```
 
 This creates a branch named from your task description and begins working on it immediately, making it easy to spin up parallel work without stopping to think of a branch name.
+
+*(v1.0.79+)* Use **`/worktree new`** to start a brand-new session in a fresh worktree without specifying a branch name — the CLI auto-generates one:
+
+```
+/worktree new
+```
+
+*(v1.0.79+)* The **`worktreeBaseRef`** setting controls whether `/worktree`, `/worktree new`, and the `--worktree` startup flag create worktrees from `HEAD` (the default) or from the remote default branch. All three now default to `HEAD`:
+
+```json
+// settings.json — override to start worktrees from the remote default branch
+{
+  "worktreeBaseRef": "remote"
+}
+```
 
 After the command runs, the session is inside the new worktree. Use this when you want to work on a second task in parallel without stashing changes or opening a new terminal. In v1.0.64+ you can also use the experimental `--worktree` flag at startup (`copilot -w [name]`) to create or reuse a worktree under `<repo>.worktrees/` before the session begins.
 
@@ -598,6 +640,14 @@ The `/share html` command exports the current session — including conversation
 ```
 
 The exported file contains everything needed to view the session without a network connection and can be shared with teammates or stored for later reference. This complements `/share` (which shares via URL) for cases where an offline or attached format is preferred.
+
+The `/app` command *(v1.0.79+)* opens the current terminal session directly in the **GitHub Copilot desktop app**, so you can continue working in the graphical interface without losing your conversation:
+
+```
+/app
+```
+
+This requires the GitHub Copilot app v1.1.3 or later. It's useful when you've been working in the CLI and want to switch to the app's My Work view, canvas surface, or parallel-session dashboard for the same task.
 
 The `/chronicle` command opens an interactive timeline of everything the agent has done in the current session. It shows file changes, tool calls, and conversation turns in chronological order, letting you review the full arc of the session at a glance:
 
@@ -744,6 +794,22 @@ copilot --plan          # start in plan mode (propose without executing)
 
 This is useful in scripts or CI pipelines where you want the CLI to immediately begin working in a specific mode without an interactive prompt.
 
+*(v1.0.79+)* Combine `--plan` with `--mode autopilot` to **plan first, then implement automatically** without waiting for approval between the two phases:
+
+```bash
+copilot --plan --mode autopilot "Add rate limiting to the login endpoint"
+```
+
+The agent produces a plan, and once planning is complete it transitions directly into autopilot to execute the implementation — no manual approval step required.
+
+The `/permissions` command *(v1.0.78+)* lets you **switch between approval modes mid-session** without restarting:
+
+```
+/permissions    # open the interactive approval-mode switcher
+```
+
+Use this instead of `/allow-all` when you want a guided interface showing the available modes (interactive, auto, allow-all) and their trade-offs.
+
 The `--max-autopilot-continues` flag controls how many times Copilot can automatically continue in autopilot mode before pausing for confirmation. The default is 5:
 
 ```bash
@@ -760,6 +826,17 @@ copilot --no-sandbox -p "Set up development environment with system tools"
 ```
 
 These flags apply only to the current invocation — your persisted sandbox preference remains unchanged.
+
+*(v1.0.79+)* The **`/sandbox`** command provides a detailed view of your effective sandbox configuration — including which paths are writable, which are read-only, what network access is allowed, and any active denials:
+
+```
+/sandbox          # show the effective sandbox policy
+/sandbox policy   # show sandbox paths, denials, and network access in detail
+```
+
+The `/sandbox` configuration dialog (opened with `/sandbox`) also shows which `settings.json` file controls each setting, groups git and `gh` authentication settings under a dedicated **Auth** tab, and marks settings that are locked by enterprise policy.
+
+**Enterprise sandbox policy** *(v1.0.79+)*: Enterprise administrators can enforce a sandbox floor using managed settings. The managed policy can tighten (but never loosen) the user's sandbox configuration. The `/sandbox` dialog surfaces org-configured values with locked fields and shows managed filesystem paths, so developers can see exactly what is enforced without needing to contact IT.
 
 The `--attachment` flag (available in prompt mode, `-p`) lets you attach files — images or native documents — to the initial prompt in non-interactive mode:
 
@@ -807,6 +884,24 @@ echo 'source ~/.copilot-completion.bash' >> ~/.bashrc
 ```
 
 > **Tip**: Reload your shell (`source ~/.bashrc` or open a new terminal) after adding the completion script for changes to take effect.
+
+### Authentication and Login
+
+The `copilot login` command authenticates with GitHub. *(v1.0.77+)* On **local interactive terminals**, `copilot login` now defaults to the **browser-based (web) OAuth flow**, which opens a page in your browser to complete sign-in:
+
+```bash
+copilot login           # opens the browser for web-based sign-in (default on local)
+copilot login --web-flow   # force browser flow
+copilot login --device-code  # use device code flow (default on remote/headless)
+```
+
+Remote and headless environments (SSH, CI, containers) continue to use the device code flow by default. Use `--web-flow` or `--device-code` to override the automatic choice.
+
+The interactive `/login` command inside a session lets you switch accounts or re-authenticate without restarting:
+
+```
+/login
+```
 
 ## Common Questions
 
