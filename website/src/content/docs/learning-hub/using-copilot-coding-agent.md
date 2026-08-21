@@ -3,7 +3,7 @@ title: 'Using the Copilot Coding Agent'
 description: 'Learn how to use GitHub Copilot coding agent to autonomously work on issues, generate pull requests, and automate development tasks.'
 authors:
   - GitHub Copilot Learning Hub Team
-lastUpdated: 2026-05-13
+lastUpdated: 2026-08-21
 estimatedReadingTime: '12 minutes'
 tags:
   - coding-agent
@@ -333,6 +333,48 @@ This repository provides a curated collection of agents, skills, and hooks desig
 4. The hooks will run automatically during coding agent sessions
 
 > **Example workflow**: Combine a `test-specialist` agent with a `database-migrations` skill and a linting hook. Assign an issue to the coding agent using the test-specialist agent — it will automatically pick up the migrations skill when relevant, and the hook ensures all code is formatted before completion.
+
+## Plan-First Autopilot Mode
+
+*(v1.0.79+)* You can now combine `--plan` with `--mode autopilot` to have Copilot generate a plan and then immediately implement it without waiting for manual approval at each step:
+
+```bash
+copilot --plan --mode autopilot -p "Refactor the user authentication module to use JWT"
+```
+
+This workflow is useful for well-understood tasks where you trust Copilot to execute without step-by-step confirmation. Copilot will:
+
+1. Generate a structured plan based on your prompt
+2. Automatically proceed to implementation without pausing for approval
+3. Complete the task and present the result for your review
+
+Compare this to using `--plan` alone (which pauses for your approval of each planned step) or `--mode autopilot` alone (which skips planning entirely). The combined form gives you the structure of planning with the speed of autopilot execution.
+
+> **Tip**: Use this for well-scoped, lower-risk tasks. For exploratory or high-impact work, use `--plan` without autopilot so you can steer at each step.
+
+## Worktree Sessions
+
+*(v1.0.79+)* The `/worktree new` command lets you start a new Copilot session in a freshly created git worktree directly from an existing session:
+
+```
+/worktree new
+```
+
+This is useful when you want to work on a parallel task without interrupting your current session. Each worktree gets its own isolated branch and environment, so multiple tasks can run simultaneously without interfering.
+
+You can also launch worktree-based sessions from the command line:
+
+```bash
+copilot --worktree -p "Fix the flaky authentication tests"
+```
+
+By default, worktrees start from HEAD. To control the base ref, set `worktreeBaseRef` in your settings:
+
+```json
+{
+  "worktreeBaseRef": "origin/main"
+}
+```
 
 ## Remote Control
 

@@ -3,7 +3,7 @@ title: 'Installing and Using Plugins'
 description: 'Learn how to find, install, and manage plugins that extend GitHub Copilot CLI with reusable agents, skills, hooks, and integrations.'
 authors:
   - GitHub Copilot Learning Hub Team
-lastUpdated: 2026-07-13
+lastUpdated: 2026-08-21
 estimatedReadingTime: '8 minutes'
 tags:
   - plugins
@@ -160,6 +160,24 @@ To automatically register an additional marketplace for everyone working in a re
 
 With this in place, team members automatically get the `my-org-plugins` marketplace available without running a separate `marketplace add` command. This replaces the older `marketplaces` setting, which was removed in v1.0.16.
 
+#### Auto-updating Marketplace Plugins
+
+*(v1.0.79+)* Set `"autoUpdate": true` on an `extraKnownMarketplaces` entry to automatically update its plugins at session start:
+
+```json
+{
+  "extraKnownMarketplaces": [
+    {
+      "name": "my-org-plugins",
+      "source": "my-org/internal-plugins",
+      "autoUpdate": true
+    }
+  ]
+}
+```
+
+This keeps team members on the latest plugin versions without requiring manual `copilot plugin update` runs. Note that first-party plugins (from `copilot-plugins`) already auto-update at session start by default.
+
 ### Pinning a Marketplace to a Specific Commit
 
 *(v1.0.70+)* To ensure reproducibility and prevent unintended updates, you can pin a marketplace to an exact commit SHA using the `sha` field in the source configuration:
@@ -221,6 +239,20 @@ copilot plugin marketplace update
 # Remove a plugin
 copilot plugin uninstall my-plugin
 ```
+
+### Enabling and Disabling Plugin Components
+
+*(v1.0.76+)* You can enable or disable individual components — plugins, agents, skills, hooks, LSP servers — from within an interactive session using the `/plugins` command:
+
+```
+/plugins                         # open the plugins management view
+/plugins enable my-plugin        # re-enable a disabled plugin
+/plugins disable my-plugin       # disable a plugin without uninstalling it
+/plugins enable --agent my-agent # enable a specific agent
+/plugins disable --hook my-hook  # disable a specific hook
+```
+
+Disabling a plugin preserves it on disk so you can quickly re-enable it. This is useful for temporarily turning off a plugin that conflicts with another or is not relevant to the current task.
 
 ### Loading Plugins from a Local Directory
 
